@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIVQ – Portail citoyen</title>
+  <style>
+    :root {
+      --bg: #0b132b;
+      --panel: #1c2541;
+      --panel-2: #243b55;
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --accent: #3b82f6;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background: linear-gradient(120deg, var(--bg), #0f1e3d 60%); color: var(--text); }
+    header { position: sticky; top: 0; z-index: 50; background: rgba(12, 18, 43, 0.7); backdrop-filter: blur(8px); border-bottom: 1px solid #1f2a44; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: 0.3px; }
+    .brand .logo { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--panel-2)); display: grid; place-items: center; font-weight: 800; }
+    .brand span { font-size: 20px; }
+    .tagline { color: var(--muted); font-size: 13px; }
+
+    main { max-width: 1100px; margin: 24px auto; padding: 0 16px 32px; display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+    .card { background: linear-gradient(180deg, var(--panel), #16213a); border: 1px solid #1f2a44; border-radius: var(--radius); box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+    .card h3 { margin: 0; padding: 16px; border-bottom: 1px solid #213056; font-size: 18px; }
+    .card .body { padding: 16px; }
+
+    button, .btn { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: transform .08s ease, opacity .2s; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button:hover { transform: translateY(-1px); }
+    .btn-secondary { background: #334155; }
+    .btn-success { background: var(--accent-2); }
+    .btn-danger { background: var(--danger); }
+    .btn-warning { background: var(--warn); color: #111827; }
+
+    input, select, textarea { width: 100%; background: #0f1e3d; color: var(--text); padding: 10px 12px; border-radius: 12px; border: 1px solid #223055; outline: none; }
+    label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; font-size: 12px; border: 1px solid #2a3d69; background: #0f1e3d; }
+
+    .muted { color: var(--muted); }
+    .sep { height: 1px; background: #213056; margin: 12px 0; }
+    .list { display: grid; gap: 10px; margin-top: 8px; }
+    .list-item { display: grid; gap: 8px; padding: 12px; border: 1px solid #223055; background: #0f1e3d; border-radius: 12px; }
+    .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .small { font-size: 12px; }
+    .right { text-align: right; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; background: #0b1733; border: 1px solid #23355d; padding: 10px; border-radius: 12px; }
+
+    .footer { color: var(--muted); font-size: 12px; margin: 18px 0 0; }
+    a { color: #93c5fd; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <div class="brand">
+          <div class="logo">S</div>
+          <div>
+            <span>SIVQ</span>
+            <div class="tagline">Ensemble pour des routes sécuritaires</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="row">
+          <div id="authState" class="pill">Non connecté</div>
+          <button id="btnAuth">Se connecter</button>
+          <button id="btnSignOut" class="btn-secondary" style="display:none">Se déconnecter</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Panneau latéral -->
+    <aside class="card">
+      <h3>Compte</h3>
+      <div class="body">
+        <div class="field">
+          <label>Nom</label>
+          <input id="uiName" placeholder="Nom et prénom" />
+        </div>
+        <div class="field">
+          <label>Courriel (lecture seule)</label>
+          <input id="uiEmail" disabled />
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>No de permis</label>
+            <input id="uiLicense" placeholder="ABC123456789" />
+          </div>
+          <div class="field">
+            <label>Points d'inaptitude</label>
+            <input id="uiPoints" type="number" min="0" value="0" />
+          </div>
+        </div>
+        <button id="btnSaveProfile" class="btn-success" disabled>Enregistrer le profil</button>
+        <div class="footer">Ces informations sont stockées dans votre espace <strong>Google Drive (appData)</strong> sous forme de base JSON chiffrée côté Google.</div>
+      </div>
+    </aside>
+
+    <!-- Contenu principal -->
+    <section class="card">
+      <h3>Mes véhicules</h3>
+      <div class="body">
+        <div class="grid-3">
+          <div class="field">
+            <label>Plaque</label>
+            <input id="uiPlate" placeholder="ABC1234" />
+          </div>
+          <div class="field">
+            <label>VIN</label>
+            <input id="uiVIN" placeholder="1HGCM82633A004352" />
+          </div>
+          <div class="field">
+            <label>Statut</label>
+            <select id="uiStatus">
+              <option value="actif">Actif</option>
+              <option value="suspendu">Suspendu</option>
+              <option value="inspection">Inspection requise</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnAddVehicle">Ajouter le véhicule</button>
+          <button id="btnClearVehicles" class="btn-warning">Vider la liste</button>
+        </div>
+        <div class="sep"></div>
+        <div id="listVehicles" class="list"></div>
+      </div>
+    </section>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <h3>Base de données JSON (Drive App Data)</h3>
+      <div class="body">
+        <div class="row-between">
+          <div class="muted small">Fichier: <span id="dbFileName">—</span> • ID: <span id="dbFileId">—</span></div>
+          <div class="row">
+            <button id="btnSync" class="btn-secondary" disabled>Recharger depuis Drive</button>
+            <button id="btnPush" class="btn-success" disabled>Enregistrer sur Drive</button>
+            <button id="btnReset" class="btn-danger" disabled>Réinitialiser DB</button>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <pre id="dbPreview" class="code" style="max-height: 320px; overflow:auto;">{}</pre>
+        <div class="footer">La DB est <strong>privée à votre compte Google</strong> (dossier caché <code>appDataFolder</code>). Aucun autre utilisateur ne voit vos données.
+        Scopes utilisés: <code>drive.appdata</code>, <code>userinfo.email</code>, <code>userinfo.profile</code>.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Google APIs -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js" async defer></script>
+
+  <script>
+    // ======== CONFIG À REMPLACER ========
+    const GOOGLE_CLIENT_ID = "348019640823-gtnj2e9ivp2kevtktqdae0ksm8k79umv.apps.googleusercontent.com";
+    const GOOGLE_API_KEY = "AIzaSyCl-xx1fyicaaBw1py2tZgcU0KwSWKJXzk";
+    // ====================================
+
+    const DISCOVERY_DOCS = [
+      'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+    ];
+    const SCOPES = [
+      'https://www.googleapis.com/auth/drive.appdata',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ].join(' ');
+
+    // État global simple
+    const state = {
+      tokenClient: null,
+      accessToken: null,
+      user: null,
+      dbFileId: null,
+      dbFileName: 'sivq_db.json',
+      db: { users: {} }
+    };
+
+    // Helpers UI
+    const $ = (id) => document.getElementById(id);
+    const setAuthState = (text) => { $('authState').textContent = text; };
+    const setDbPreview = () => { $('dbPreview').textContent = JSON.stringify(state.db, null, 2); };
+    const enableControls = (enabled) => {
+      ['btnSaveProfile','btnSync','btnPush','btnReset','btnAddVehicle','btnClearVehicles']
+        .forEach(id => $(id).disabled = !enabled);
+    }
+
+    // Charger Google API quand prêt
+    window.addEventListener('load', () => {
+      window.gapiLoaded = () => { gapi.load('client', initializeGapiClient); };
+      window.gisLoaded = () => { state.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: async (resp) => {
+          if (resp.error) { console.error(resp); return; }
+          state.accessToken = resp.access_token;
+          setAuthState('Authentifié');
+          $('btnAuth').style.display = 'none';
+          $('btnSignOut').style.display = 'inline-block';
+          await bootstrapAfterLogin();
+        }
+      }); };
+    });
+
+    async function initializeGapiClient() {
+      try {
+        await gapi.client.init({ apiKey: GOOGLE_API_KEY, discoveryDocs: DISCOVERY_DOCS });
+        // Attacher boutons
+        $('btnAuth').addEventListener('click', () => state.tokenClient.requestAccessToken({ prompt: 'consent' }));
+        $('btnSignOut').addEventListener('click', signOut);
+        $('btnSaveProfile').addEventListener('click', onSaveProfile);
+        $('btnAddVehicle').addEventListener('click', onAddVehicle);
+        $('btnClearVehicles').addEventListener('click', onClearVehicles);
+        $('btnSync').addEventListener('click', loadDbFromDrive);
+        $('btnPush').addEventListener('click', saveDbToDrive);
+        $('btnReset').addEventListener('click', resetDb);
+        // Afficher scripts prêts
+        setAuthState('Prêt – veuillez vous connecter');
+        setDbPreview();
+      } catch (e) {
+        console.error(e);
+        alert('Erreur d\'initialisation Google API: ' + e.message);
+      }
+    }
+
+    async function signOut() {
+      try {
+        if (state.accessToken) {
+          await fetch(`https://oauth2.googleapis.com/revoke?token=${state.accessToken}`, { method: 'POST', headers: { 'Content-type': 'application/x-www-form-urlencoded' }});
+        }
+      } catch (e) { console.warn('Revoke token warning', e); }
+      state.accessToken = null;
+      state.user = null;
+      enableControls(false);
+      $('btnAuth').style.display = 'inline-block';
+      $('btnSignOut').style.display = 'none';
+      setAuthState('Non connecté');
+    }
+
+    async function bootstrapAfterLogin() {
+      enableControls(true);
+      await loadUserInfo();
+      await ensureDbFileExists();
+      await loadDbFromDrive();
+      ensureUserRecord();
+      renderFromState();
+    }
+
+    async function loadUserInfo() {
+      // Récupère email + nom via userinfo endpoint
+      const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + state.accessToken }});
+      state.user = await resp.json();
+      $('uiEmail').value = state.user.email || '';
+      $('uiName').value = state.user.name || '';
+    }
+
+    function ensureUserRecord() {
+      if (!state.user || !state.user.email) return;
+      const email = state.user.email;
+      if (!state.db.users[email]) {
+        state.db.users[email] = {
+          name: $('uiName').value || state.user.name || '',
+          licenseNumber: '',
+          points: 0,
+          vehicles: []
+        };
+      }
+      const u = state.db.users[email];
+      $('uiName').value = u.name || '';
+      $('uiLicense').value = u.licenseNumber || '';
+      $('uiPoints').value = (u.points ?? 0);
+      renderVehicles();
+      setDbPreview();
+    }
+
+    async function ensureDbFileExists() {
+      // Cherche le fichier dans appDataFolder
+      const list = await gapi.client.drive.files.list({
+        spaces: 'appDataFolder', q: `name='${state.dbFileName}' and trashed=false`, fields: 'files(id, name, modifiedTime, size)'
+      });
+      const files = list.result.files;
+      if (files && files.length) {
+        state.dbFileId = files[0].id;
+        $('dbFileId').textContent = state.dbFileId;
+        $('dbFileName').textContent = files[0].name;
+        return;
+      }
+      // Créer un fichier vide par défaut
+      const metadata = { name: state.dbFileName, parents: ['appDataFolder'], mimeType: 'application/json' };
+      const body = JSON.stringify({ users: {} });
+      const multipart = buildMultipart(metadata, body, 'application/json');
+      const create = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + state.accessToken }, body: multipart });
+      const created = await create.json();
+      state.dbFileId = created.id;
+      $('dbFileId').textContent = state.dbFileId;
+      $('dbFileName').textContent = state.dbFileName;
+    }
+
+    async function loadDbFromDrive() {
+      if (!state.dbFileId) { await ensureDbFileExists(); }
+      const url = `https://www.googleapis.com/drive/v3/files/${state.dbFileId}?alt=media`;
+      const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + state.accessToken }});
+      const text = await resp.text();
+      try { state.db = JSON.parse(text || '{"users":{}}'); } catch { state.db = { users: {} }; }
+      setDbPreview();
+      ensureUserRecord();
+    }
+
+    async function saveDbToDrive() {
+      if (!state.dbFileId) return;
+      const metadata = { name: state.dbFileName };
+      const body = JSON.stringify(state.db);
+      const multipart = buildMultipart(metadata, body, 'application/json');
+      const url = `https://www.googleapis.com/upload/drive/v3/files/${state.dbFileId}?uploadType=multipart`;
+      const resp = await fetch(url, { method: 'PATCH', headers: { Authorization: 'Bearer ' + state.accessToken }, body: multipart });
+      if (!resp.ok) { alert('Erreur de sauvegarde Drive'); return; }
+      setDbPreview();
+    }
+
+    function resetDb() {
+      if (!confirm('Réinitialiser la base JSON pour ce compte Google ?')) return;
+      state.db = { users: {} };
+      ensureUserRecord();
+      saveDbToDrive();
+    }
+
+    // Profil
+    function onSaveProfile() {
+      const email = state.user?.email;
+      if (!email) return;
+      const u = state.db.users[email] || {};
+      u.name = $('uiName').value.trim();
+      u.licenseNumber = $('uiLicense').value.trim();
+      u.points = parseInt($('uiPoints').value || '0', 10);
+      state.db.users[email] = u;
+      setDbPreview();
+      saveDbToDrive();
+    }
+
+    // Véhicules
+    function onAddVehicle() {
+      const email = state.user?.email;
+      if (!email) return;
+      const plate = $('uiPlate').value.trim();
+      const vin = $('uiVIN').value.trim();
+      const status = $('uiStatus').value;
+      if (!plate || !vin) { alert('Plaque et VIN requis.'); return; }
+      const u = state.db.users[email];
+      u.vehicles = u.vehicles || [];
+      u.vehicles.push({ plate, vin, status, addedAt: new Date().toISOString() });
+      $('uiPlate').value = '';
+      $('uiVIN').value = '';
+      renderVehicles();
+      setDbPreview();
+      saveDbToDrive();
+    }
+
+    function onClearVehicles() {
+      const email = state.user?.email;
+      if (!email) return;
+      if (!confirm('Supprimer tous les véhicules de votre profil ?')) return;
+      const u = state.db.users[email];
+      u.vehicles = [];
+      renderVehicles();
+      setDbPreview();
+      saveDbToDrive();
+    }
+
+    function renderVehicles() {
+      const email = state.user?.email;
+      if (!email) return;
+      const u = state.db.users[email] || { vehicles: [] };
+      const container = $('listVehicles');
+      container.innerHTML = '';
+      (u.vehicles || []).forEach((v, idx) => {
+        const el = document.createElement('div');
+        el.className = 'list-item';
+        el.innerHTML = `
+          <div class="row-between">
+            <div>
+              <div><strong>${v.plate}</strong> • <span class="muted">${v.vin}</span></div>
+              <div class="small muted">Statut: ${v.status} • Ajouté: ${new Date(v.addedAt).toLocaleString()}</div>
+            </div>
+            <div class="row">
+              <button data-idx="${idx}" class="btn-secondary btn-edit">Modifier</button>
+              <button data-idx="${idx}" class="btn-danger btn-del">Supprimer</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+      // Wire actions
+      container.querySelectorAll('.btn-del').forEach(btn => btn.addEventListener('click', (e) => {
+        const i = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+        const u = state.db.users[email];
+        u.vehicles.splice(i, 1);
+        renderVehicles();
+        setDbPreview();
+        saveDbToDrive();
+      }));
+      container.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', (e) => {
+        const i = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+        const u = state.db.users[email];
+        const v = u.vehicles[i];
+        const plate = prompt('Plaque', v.plate) || v.plate;
+        const vin = prompt('VIN', v.vin) || v.vin;
+        const status = prompt('Statut (actif/suspendu/inspection)', v.status) || v.status;
+        u.vehicles[i] = { ...v, plate, vin, status };
+        renderVehicles();
+        setDbPreview();
+        saveDbToDrive();
+      }));
+    }
+
+    // Utilitaire: construit un multipart/related pour l'upload Drive
+    function buildMultipart(metadata, data, mimeType) {
+      const boundary = '-------sivqdrive' + Math.random().toString(16).slice(2);
+      const delimiter = `\r\n--${boundary}\r\n`;
+      const closeDelimiter = `\r\n--${boundary}--`;
+      const body = (
+        delimiter +
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        `Content-Type: ${mimeType}\r\n\r\n` +
+        data +
+        closeDelimiter
+      );
+      return new Blob([body], { type: 'multipart/related; boundary=' + boundary });
+    }
+
+    // Attendre que scripts externes aient appelé leurs callbacks
+    // On ajoute dynamiquement les callbacks attendus par les scripts async
+    (function attachGlobalCallbacks(){
+      const s1 = document.createElement('script');
+      s1.textContent = 'function gapiLoaded(){window.gapiLoaded();}';
+      document.head.appendChild(s1);
+      const s2 = document.createElement('script');
+      s2.textContent = 'function gisLoaded(){window.gisLoaded();}';
+      document.head.appendChild(s2);
+    })();
+  </script>
+</body>
+</html>
